@@ -128,7 +128,7 @@ export default function HomePage() {
         </div>
         {/* Category Filter */}
         {categories.length > 0 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+          <div className="flex flex-wrap gap-2 mt-3">
             <Badge
               variant={selectedCategory === null ? 'default' : 'outline'}
               className="cursor-pointer whitespace-nowrap"

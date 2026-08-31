@@ -31,8 +31,31 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    // 搜索产品名称、描述和所有参数
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,params.ilike.%${search}%`);
+    // jsonb 字段不支持 ilike，先获取全部数据再在内存中过滤
+    const { data: allData, error: fetchError } = await query
+      .order('is_pinned', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
+
+    const keyword = search.toLowerCase();
+    const filtered = (allData || []).filter((p: Product) => {
+      // 搜索名称和描述
+      if (p.name?.toLowerCase().includes(keyword)) return true;
+      if (p.description?.toLowerCase().includes(keyword)) return true;
+      // 搜索所有参数值
+      if (p.params) {
+        for (const val of Object.values(p.params)) {
+          if (String(val).toLowerCase().includes(keyword)) return true;
+        }
+      }
+      return false;
+    });
+
+    return NextResponse.json({ data: filtered });
   }
 
   const { data, error } = await query
