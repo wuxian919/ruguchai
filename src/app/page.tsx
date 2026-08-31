@@ -190,12 +190,12 @@ function ProductCard({
   ];
 
   const paramPairs = [
-    { label: '泥料', value: getParamValue(product.params, '泥料') },
-    { label: '容量', value: getParamValue(product.params, '容量') },
-    { label: '工艺', value: getParamValue(product.params, '工艺') },
-    { label: '定位', value: getParamValue(product.params, '定位') },
-    { label: '茶种', value: getParamValue(product.params, '茶种') },
     { label: '价格', value: getParamValue(product.params, '价格') },
+    { label: '容量', value: getParamValue(product.params, '容量') },
+    { label: '泥料', value: getParamValue(product.params, '泥料') },
+    { label: '工艺', value: getParamValue(product.params, '工艺') },
+    { label: '茶种', value: getParamValue(product.params, '茶种') },
+    { label: '定位', value: getParamValue(product.params, '定位') },
   ].filter((p) => p.value);
 
   return (
@@ -250,7 +250,7 @@ function ProductCard({
       {paramPairs.length > 0 && (
         <div className="px-6 pb-4">
           <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-            {paramPairs.map((param) => (
+            {paramPairs.slice(0, 4).map((param) => (
               <div key={param.label} className="flex items-center gap-2">
                 <span className="bg-stone-800 text-white px-2 py-0.5 rounded text-sm font-medium min-w-[2.5rem] text-center">
                   {param.label}
@@ -259,6 +259,19 @@ function ProductCard({
               </div>
             ))}
           </div>
+          {/* 茶种和定位单独一行 */}
+          {paramPairs.slice(4).length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-4">
+              {paramPairs.slice(4).map((param) => (
+                <div key={param.label} className="flex items-center gap-2">
+                  <span className="bg-stone-800 text-white px-2 py-0.5 rounded text-sm font-medium min-w-[2.5rem] text-center">
+                    {param.label}
+                  </span>
+                  <span className="text-base text-stone-700">{param.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
