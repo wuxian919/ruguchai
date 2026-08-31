@@ -45,7 +45,7 @@ interface Category {
 }
 
 const DEFAULT_PARAMS_KEYS = [
-  '长', '高', '重', '价格', '泥料', '容量', '工艺', '品牌', '烧制',
+  '长', '高', '重', '价格', '泥料', '容量', '工艺', '定位', '茶种',
 ];
 
 export default function AdminPage() {

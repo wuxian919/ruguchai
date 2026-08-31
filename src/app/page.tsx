@@ -194,8 +194,8 @@ function ProductCard({
     { label: '泥料', value: getParamValue(product.params, '泥料') },
     { label: '容量', value: getParamValue(product.params, '容量') },
     { label: '工艺', value: getParamValue(product.params, '工艺') },
-    { label: '品牌', value: getParamValue(product.params, '品牌') },
-    { label: '烧制', value: getParamValue(product.params, '烧制') },
+    { label: '定位', value: getParamValue(product.params, '定位') },
+    { label: '茶种', value: getParamValue(product.params, '茶种') },
   ].filter((p) => p.value);
 
   return (
@@ -205,6 +205,26 @@ function ProductCard({
         <h2 className="text-3xl font-bold text-center text-stone-900 tracking-wide">
           {product.name}
         </h2>
+      </div>
+
+      {/* Product Image */}
+      <div className="px-6 pb-4">
+        <div className="relative bg-stone-50 rounded-xl overflow-hidden aspect-square flex items-center justify-center">
+          {!imageLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center text-stone-400">
+              图片加载中...
+            </div>
+          )}
+          <img
+            src={product.image_url}
+            alt={product.name}
+            className={`w-full h-full object-contain transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(true)}
+          />
+        </div>
       </div>
 
       {/* Top Params Row (长 高 重) */}
@@ -241,26 +261,6 @@ function ProductCard({
           </div>
         </div>
       )}
-
-      {/* Product Image */}
-      <div className="px-6 pb-4">
-        <div className="relative bg-stone-50 rounded-xl overflow-hidden aspect-square flex items-center justify-center">
-          {!imageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center text-stone-400">
-              图片加载中...
-            </div>
-          )}
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className={`w-full h-full object-contain transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageLoaded(true)}
-          />
-        </div>
-      </div>
 
       {/* Description */}
       {product.description && (
