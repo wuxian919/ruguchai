@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, ChevronUp } from 'lucide-react';
 
@@ -13,6 +14,7 @@ interface Product {
   description: string | null;
   sort_order: number;
   category_id: number | null;
+  category_ids: number[] | null;
   is_pinned: boolean;
   created_at: string;
   updated_at: string | null;
@@ -28,6 +30,7 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -39,7 +42,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -65,10 +68,15 @@ export default function HomePage() {
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => fetchData(), 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -108,11 +116,15 @@ export default function HomePage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <Input
               placeholder="搜索壶名、价格、泥料..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="pl-10 bg-stone-50 border-stone-200"
             />
           </div>
+          <Button onClick={handleSearch} variant="outline" size="icon">
+            <Search className="w-4 h-4" />
+          </Button>
         </div>
         {/* Category Filter */}
         {categories.length > 0 && (

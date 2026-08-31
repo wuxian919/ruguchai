@@ -30,6 +30,7 @@ export const products = pgTable(
 		description: text("description"),
 		sort_order: integer("sort_order").notNull().default(0),
 		category_id: integer("category_id").references(() => categories.id),
+		category_ids: jsonb("category_ids"),
 		is_pinned: boolean("is_pinned").notNull().default(false),
 		created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 		updated_at: timestamp("updated_at", { withTimezone: true }),

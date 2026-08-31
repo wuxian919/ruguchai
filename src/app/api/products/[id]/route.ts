@@ -9,6 +9,7 @@ interface Product {
   description: string | null;
   sort_order: number;
   category_id: number | null;
+  category_ids: number[] | null;
   is_pinned: boolean;
   created_at: string;
   updated_at: string | null;
@@ -55,6 +56,7 @@ export async function PUT(
       description: body.description || null,
       sort_order: body.sort_order ?? 0,
       category_id: body.category_id || null,
+      category_ids: body.category_ids || null,
       is_pinned: body.is_pinned ?? false,
       updated_at: new Date().toISOString(),
     })

@@ -9,6 +9,7 @@ interface Product {
   description: string | null;
   sort_order: number;
   category_id: number | null;
+  category_ids: number[] | null;
   is_pinned: boolean;
   created_at: string;
   updated_at: string | null;
@@ -23,11 +24,15 @@ export async function GET(request: NextRequest) {
   let query = client.from('products').select('*');
 
   if (categoryId) {
-    query = query.eq('category_id', parseInt(categoryId));
+    // 支持多选分类：检查 category_ids 数组是否包含该分类 ID
+    // 同时兼容旧的 category_id 字段
+    const catId = parseInt(categoryId);
+    query = query.or(`category_ids.cs.[${catId}],category_id.eq.${catId}`);
   }
 
   if (search) {
-    query = query.ilike('name', `%${search}%`);
+    // 搜索产品名称、描述和所有参数
+    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,params.ilike.%${search}%`);
   }
 
   const { data, error } = await query
@@ -55,6 +60,7 @@ export async function POST(request: NextRequest) {
       description: body.description || null,
       sort_order: body.sort_order ?? 0,
       category_id: body.category_id || null,
+      category_ids: body.category_ids || null,
       is_pinned: body.is_pinned ?? false,
     })
     .select()

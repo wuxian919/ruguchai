@@ -16,14 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Plus, Edit2, Trash2, Save, X, Upload, Image } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Upload, Image, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -33,6 +26,7 @@ interface Product {
   description: string | null;
   sort_order: number;
   category_id: number | null;
+  category_ids: number[] | null;
   is_pinned: boolean;
   created_at: string;
   updated_at: string | null;
@@ -133,6 +127,38 @@ export default function AdminPage() {
       fetchData();
     } catch (error) {
       console.error('Failed to delete category:', error);
+    }
+  };
+
+  const handleMoveCategory = async (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= categories.length) return;
+
+    const newCategories = [...categories];
+    const temp = newCategories[index];
+    newCategories[index] = newCategories[newIndex];
+    newCategories[newIndex] = temp;
+
+    // 更新 sort_order
+    const updatedCategories = newCategories.map((cat, idx) => ({
+      ...cat,
+      sort_order: idx,
+    }));
+
+    // 批量更新
+    try {
+      await Promise.all(
+        updatedCategories.map((cat) =>
+          fetch(`/api/categories/${cat.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: cat.name, sort_order: cat.sort_order }),
+          })
+        )
+      );
+      setCategories(updatedCategories);
+    } catch (error) {
+      console.error('Failed to reorder categories:', error);
     }
   };
 
@@ -239,17 +265,35 @@ export default function AdminPage() {
             </div>
 
             <div className="grid gap-2">
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <Card key={category.id}>
                   <CardContent className="flex items-center justify-between p-4">
-                    <span className="font-medium">{category.name}</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteCategory(category.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <span className="font-medium flex-1">{category.name}</span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleMoveCategory(index, 'up')}
+                        disabled={index === 0}
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleMoveCategory(index, 'down')}
+                        disabled={index === categories.length - 1}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteCategory(category.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -278,6 +322,9 @@ function ProductForm({
   const [sortOrder, setSortOrder] = useState(product?.sort_order ?? 0);
   const [categoryId, setCategoryId] = useState(
     product?.category_id?.toString() || 'none'
+  );
+  const [categoryIds, setCategoryIds] = useState<number[]>(
+    product?.category_ids || []
   );
   const [isPinned, setIsPinned] = useState(product?.is_pinned ?? false);
   const [params, setParams] = useState<Record<string, string>>(
@@ -324,6 +371,7 @@ function ProductForm({
       description: description || null,
       sort_order: sortOrder,
       category_id: categoryId === 'none' ? null : parseInt(categoryId),
+      category_ids: categoryIds.length > 0 ? categoryIds : null,
       is_pinned: isPinned,
       created_at: product?.created_at || new Date().toISOString(),
       updated_at: null,
@@ -425,29 +473,45 @@ function ProductForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>分类</Label>
-          <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger>
-              <SelectValue placeholder="选择分类" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">无分类</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
           <Label>排序值</Label>
           <Input
             type="number"
             value={sortOrder}
             onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
           />
+        </div>
+      </div>
+
+      <div>
+        <Label>分类（可多选）</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {categories.length === 0 && (
+            <span className="text-sm text-stone-500">暂无分类，请先在"分类管理"中添加</span>
+          )}
+          {categories.map((cat) => (
+            <label
+              key={cat.id}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer transition-colors text-sm ${
+                categoryIds.includes(cat.id)
+                  ? 'bg-stone-800 text-white border-stone-800'
+                  : 'bg-white text-stone-700 border-stone-300 hover:border-stone-400'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={categoryIds.includes(cat.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setCategoryIds([...categoryIds, cat.id]);
+                  } else {
+                    setCategoryIds(categoryIds.filter((id) => id !== cat.id));
+                  }
+                }}
+                className="hidden"
+              />
+              {cat.name}
+            </label>
+          ))}
         </div>
       </div>
 
