@@ -190,12 +190,12 @@ function ProductCard({
   ];
 
   const paramPairs = [
-    { label: '价格', value: getParamValue(product.params, '价格') },
     { label: '泥料', value: getParamValue(product.params, '泥料') },
     { label: '容量', value: getParamValue(product.params, '容量') },
     { label: '工艺', value: getParamValue(product.params, '工艺') },
     { label: '定位', value: getParamValue(product.params, '定位') },
     { label: '茶种', value: getParamValue(product.params, '茶种') },
+    { label: '价格', value: getParamValue(product.params, '价格') },
   ].filter((p) => p.value);
 
   return (
