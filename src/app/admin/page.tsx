@@ -386,7 +386,7 @@ function ProductForm({
       <div>
         <Label>产品参数</Label>
         <div className="grid grid-cols-2 gap-2 mt-2">
-          {DEFAULT_PARAMS_KEYS.map((key) => (
+          {DEFAULT_PARAMS_KEYS.filter(key => key !== '茶种').map((key) => (
             <div key={key} className="flex items-center gap-2">
               <span className="text-sm w-12">{key}</span>
               <Input
@@ -398,6 +398,18 @@ function ProductForm({
               />
             </div>
           ))}
+        </div>
+        {/* 茶种单独一行，占满宽度 */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-sm w-12">茶种</span>
+          <Input
+            value={params['茶种'] || ''}
+            onChange={(e) =>
+              setParams({ ...params, '茶种': e.target.value })
+            }
+            placeholder="茶种"
+            className="flex-1"
+          />
         </div>
       </div>
 
