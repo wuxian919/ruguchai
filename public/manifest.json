@@ -1,11 +1,11 @@
 {
-  "name": "柴烧壶作品集",
-  "short_name": "柴烧壶",
-  "description": "柴烧壶产品展示与直播助手",
+  "name": "如故",
+  "short_name": "如故",
+  "description": "古法柴烧·裸烧落灰",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fafaf9",
-  "theme_color": "#292524",
+  "background_color": "#1a0f0f",
+  "theme_color": "#1a0f0f",
   "orientation": "portrait",
   "icons": [
     {

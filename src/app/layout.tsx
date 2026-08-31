@@ -4,14 +4,19 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: '柴烧壶作品集',
-    template: '%s | 柴烧壶作品集',
+    default: '如故',
+    template: '%s | 如故',
   },
-  description: '柴烧壶产品展示与直播助手',
+  description: '古法柴烧·裸烧落灰',
   manifest: '/manifest.json',
   icons: {
     icon: '/icon-192.png',
     apple: '/icon-192.png',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': '如故',
   },
 };
 
@@ -20,7 +25,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#292524',
+  themeColor: '#1a0f0f',
 };
 
 export default function RootLayout({

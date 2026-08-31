@@ -101,7 +101,7 @@ export default function HomePage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-4 py-3">
         <h1 className="text-xl font-bold text-center text-stone-800 mb-3">
-          柴烧壶作品集
+          如故
         </h1>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -167,8 +167,8 @@ export default function HomePage() {
 
       {/* Footer */}
       <div className="text-center py-8 text-sm text-stone-400">
+        <p>如故 · 古法柴烧</p>
         <p>场景图片因环境、风格化等因素影响存在色差</p>
-        <p>茶壶实际颜色请以此图为准</p>
       </div>
     </div>
   );
