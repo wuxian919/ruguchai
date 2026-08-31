@@ -195,7 +195,6 @@ function ProductCard({
     { label: '泥料', value: getParamValue(product.params, '泥料') },
     { label: '工艺', value: getParamValue(product.params, '工艺') },
     { label: '茶种', value: getParamValue(product.params, '茶种') },
-    { label: '定位', value: getParamValue(product.params, '定位') },
   ].filter((p) => p.value);
 
   return (
