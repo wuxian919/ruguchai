@@ -107,7 +107,7 @@ export default function HomePage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <Input
-              placeholder="搜索壶名、作者、泥料..."
+              placeholder="搜索壶名、价格、泥料..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-stone-50 border-stone-200"
@@ -190,7 +190,7 @@ function ProductCard({
   ];
 
   const paramPairs = [
-    { label: '作者', value: getParamValue(product.params, '作者') },
+    { label: '价格', value: getParamValue(product.params, '价格') },
     { label: '泥料', value: getParamValue(product.params, '泥料') },
     { label: '容量', value: getParamValue(product.params, '容量') },
     { label: '工艺', value: getParamValue(product.params, '工艺') },

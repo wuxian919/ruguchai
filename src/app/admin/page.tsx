@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Upload, Image } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -45,7 +45,7 @@ interface Category {
 }
 
 const DEFAULT_PARAMS_KEYS = [
-  '长', '高', '重', '作者', '泥料', '容量', '工艺', '品牌', '烧制',
+  '长', '高', '重', '价格', '泥料', '容量', '工艺', '品牌', '烧制',
 ];
 
 export default function AdminPage() {
@@ -283,6 +283,36 @@ function ProductForm({
   const [params, setParams] = useState<Record<string, string>>(
     product?.params || {}
   );
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(product?.image_url || '');
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        setImageUrl(data.url);
+        setPreviewUrl(data.url);
+      } else {
+        alert('上传失败：' + (data.error || '未知错误'));
+      }
+    } catch (error) {
+      alert('上传失败：' + error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,13 +343,44 @@ function ProductForm({
       </div>
 
       <div>
-        <Label>图片URL *</Label>
-        <Input
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://..."
-          required
-        />
+        <Label>产品图片</Label>
+        <div className="space-y-2">
+          {previewUrl && (
+            <div className="relative w-full h-48 bg-stone-100 rounded-lg overflow-hidden">
+              <img
+                src={previewUrl}
+                alt="预览"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
+          <div className="flex gap-2">
+            <label className="flex-1 cursor-pointer">
+              <div className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-stone-300 rounded-lg hover:border-stone-400 transition-colors">
+                <Upload className="w-4 h-4" />
+                <span className="text-sm">{uploading ? '上传中...' : '上传图片'}</span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+          </div>
+          <div>
+            <Label className="text-xs text-stone-500">或直接输入图片URL</Label>
+            <Input
+              value={imageUrl}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                setPreviewUrl(e.target.value);
+              }}
+              placeholder="https://..."
+            />
+          </div>
+        </div>
       </div>
 
       <div>
