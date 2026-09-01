@@ -8,3 +8,11 @@ export async function POST() {
   }
   return NextResponse.json({ error: result.message }, { status: 500 });
 }
+
+export async function GET() {
+  const result = await createDefaultUser();
+  if (result.success) {
+    return NextResponse.json({ message: result.message });
+  }
+  return NextResponse.json({ error: result.message }, { status: 500 });
+}
