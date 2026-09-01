@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, ChevronUp } from 'lucide-react';
+import { Search, ChevronUp, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { authFetch } from '@/lib/fetch';
 
 interface Product {
   id: number;
@@ -27,6 +29,7 @@ interface Category {
 }
 
 export default function HomePage() {
+  const { user, loading: authLoading, logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,8 +40,10 @@ export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!authLoading && user) {
+      fetchData();
+    }
+  }, [authLoading, user]);
 
   useEffect(() => {
     fetchData();
@@ -54,8 +59,8 @@ export default function HomePage() {
       if (params.toString()) url += `?${params.toString()}`;
 
       const [productsRes, categoriesRes] = await Promise.all([
-        fetch(url),
-        fetch('/api/categories'),
+        authFetch(url),
+        authFetch('/api/categories'),
       ]);
       const productsData = await productsRes.json();
       const categoriesData = await categoriesRes.json();
@@ -92,6 +97,14 @@ export default function HomePage() {
     return params?.[key] || '';
   };
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-stone-50">
+        <div className="text-lg text-stone-600">验证中...</div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-stone-50">
@@ -108,9 +121,18 @@ export default function HomePage() {
     >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-4 py-3">
-        <h1 className="text-xl font-bold text-center text-stone-800 mb-3">
-          如故
-        </h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-bold text-center text-stone-800 flex-1">
+            如故
+          </h1>
+          <button
+            onClick={logout}
+            className="text-stone-400 hover:text-stone-600 p-1"
+            title="退出登录"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />

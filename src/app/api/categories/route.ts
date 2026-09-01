@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { requireAuth } from '@/lib/api-auth';
 
 interface Category {
   id: number;
@@ -9,7 +10,10 @@ interface Category {
   updated_at: string | null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (!authResult) return NextResponse.json({ error: '未登录' }, { status: 401 });
+
   const client = getSupabaseClient();
 
   const { data, error } = await client
@@ -26,6 +30,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (!authResult) return NextResponse.json({ error: '未登录' }, { status: 401 });
+
   const client = getSupabaseClient();
   const body = await request.json();
 

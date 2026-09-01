@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { requireAuth } from '@/lib/api-auth';
 
 interface Product {
   id: number;
@@ -16,6 +17,9 @@ interface Product {
 }
 
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (!authResult) return NextResponse.json({ error: '未登录' }, { status: 401 });
+
   const client = getSupabaseClient();
   const { searchParams } = new URL(request.url);
   const categoryId = searchParams.get('category_id');
@@ -71,6 +75,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (!authResult) return NextResponse.json({ error: '未登录' }, { status: 401 });
+
   const client = getSupabaseClient();
   const body = await request.json();
 

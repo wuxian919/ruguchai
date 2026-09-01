@@ -16,7 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, Save, X, Upload, Image, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Upload, Image, ChevronUp, ChevronDown, LogOut, Key } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { authFetch } from '@/lib/fetch';
 
 interface Product {
   id: number;
@@ -43,23 +45,31 @@ const DEFAULT_PARAMS_KEYS = [
 ];
 
 export default function AdminPage() {
+  const { user, loading: authLoading, logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMsg, setPasswordMsg] = useState('');
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!authLoading && user) {
+      fetchData();
+    }
+  }, [authLoading, user]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        fetch('/api/products'),
-        fetch('/api/categories'),
+        authFetch('/api/products'),
+        authFetch('/api/categories'),
       ]);
       const productsData = await productsRes.json();
       const categoriesData = await categoriesRes.json();
@@ -75,13 +85,13 @@ export default function AdminPage() {
   const handleSaveProduct = async (product: Product) => {
     try {
       if (product.id) {
-        await fetch(`/api/products/${product.id}`, {
+        await authFetch(`/api/products/${product.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product),
         });
       } else {
-        await fetch('/api/products', {
+        await authFetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product),
@@ -98,7 +108,7 @@ export default function AdminPage() {
   const handleDeleteProduct = async (id: number) => {
     if (!confirm('确定要删除这个产品吗？')) return;
     try {
-      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      await authFetch(`/api/products/${id}`, { method: 'DELETE' });
       fetchData();
     } catch (error) {
       console.error('Failed to delete product:', error);
@@ -108,7 +118,7 @@ export default function AdminPage() {
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
     try {
-      await fetch('/api/categories', {
+      await authFetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCategoryName.trim(), sort_order: categories.length }),
@@ -123,7 +133,7 @@ export default function AdminPage() {
   const handleDeleteCategory = async (id: number) => {
     if (!confirm('确定要删除这个分类吗？')) return;
     try {
-      await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+      await authFetch(`/api/categories/${id}`, { method: 'DELETE' });
       fetchData();
     } catch (error) {
       console.error('Failed to delete category:', error);
@@ -149,7 +159,7 @@ export default function AdminPage() {
     try {
       await Promise.all(
         updatedCategories.map((cat) =>
-          fetch(`/api/categories/${cat.id}`, {
+          authFetch(`/api/categories/${cat.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: cat.name, sort_order: cat.sort_order }),
@@ -162,6 +172,47 @@ export default function AdminPage() {
     }
   };
 
+  const handleChangePassword = async () => {
+    setPasswordMsg('');
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg('两次输入的新密码不一致');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordMsg('新密码至少6位');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPasswordMsg(data.error || '修改失败');
+        return;
+      }
+      // 密码修改成功，token 已失效，退出登录
+      logout();
+    } catch {
+      setPasswordMsg('网络错误');
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">验证中...</div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -173,7 +224,73 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">柴烧壶产品管理</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">柴烧壶产品管理</h1>
+          <div className="flex items-center gap-2">
+            <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Key className="w-4 h-4 mr-1" />
+                  修改密码
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>修改密码</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  {passwordMsg && (
+                    <div className={`text-sm px-3 py-2 rounded ${passwordMsg.includes('成功') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                      {passwordMsg}
+                    </div>
+                  )}
+                  <div>
+                    <Label>原密码</Label>
+                    <Input
+                      type="password"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="请输入原密码"
+                    />
+                  </div>
+                  <div>
+                    <Label>新密码</Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="至少6位"
+                    />
+                  </div>
+                  <div>
+                    <Label>确认新密码</Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="再次输入新密码"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => { setShowPasswordDialog(false); setPasswordMsg(''); setOldPassword(''); setNewPassword(''); setConfirmPassword(''); }}>
+                      取消
+                    </Button>
+                    <Button onClick={handleChangePassword}>
+                      确认修改
+                    </Button>
+                  </div>
+                  <p className="text-xs text-stone-500">
+                    注意：修改密码后，所有已登录的设备将自动退出，需要用新密码重新登录。
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" size="sm" onClick={logout}>
+              <LogOut className="w-4 h-4 mr-1" />
+              退出
+            </Button>
+          </div>
+        </div>
 
         <Tabs defaultValue="products">
           <TabsList className="mb-6">
@@ -342,7 +459,7 @@ function ProductForm({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload', {
+      const response = await authFetch('/api/upload', {
         method: 'POST',
         body: formData,
       });

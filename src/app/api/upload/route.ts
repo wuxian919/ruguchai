@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Storage } from 'coze-coding-dev-sdk';
+import { requireAuth } from '@/lib/api-auth';
 
 const storage = new S3Storage({
   endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
@@ -10,6 +11,9 @@ const storage = new S3Storage({
 });
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (!authResult) return NextResponse.json({ error: '未登录' }, { status: 401 });
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
