@@ -7,20 +7,30 @@ interface SupabaseCredentials {
 
 function getSupabaseCredentials(): SupabaseCredentials {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.COZE_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.COZE_SUPABASE_ANON_KEY;
+  // Support both old anon key and new publishable key formats
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.COZE_SUPABASE_ANON_KEY ||
+    process.env.COZE_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url) {
-    throw new Error('SUPABASE_URL is not set. Please set NEXT_PUBLIC_SUPABASE_URL or COZE_SUPABASE_URL environment variable.');
+    throw new Error('SUPABASE_URL is not set. Please set NEXT_PUBLIC_SUPABASE_URL environment variable.');
   }
   if (!anonKey) {
-    throw new Error('SUPABASE_ANON_KEY is not set. Please set NEXT_PUBLIC_SUPABASE_ANON_KEY or COZE_SUPABASE_ANON_KEY environment variable.');
+    throw new Error('SUPABASE_PUBLISHABLE_KEY is not set. Please set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variable.');
   }
 
   return { url, anonKey };
 }
 
 function getSupabaseServiceRoleKey(): string | undefined {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.COZE_SUPABASE_SERVICE_ROLE_KEY;
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.COZE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.COZE_SUPABASE_SECRET_KEY
+  );
 }
 
 function getSupabaseClient(token?: string): SupabaseClient {
