@@ -75,6 +75,7 @@ export default function LoginPage() {
                   className="pl-10"
                   required
                   autoComplete="username"
+                  defaultValue="rugu"
                 />
               </div>
             </div>
@@ -92,6 +93,7 @@ export default function LoginPage() {
                   className="pl-10 pr-10"
                   required
                   autoComplete="current-password"
+                  defaultValue="rugu"
                 />
                 <button
                   type="button"

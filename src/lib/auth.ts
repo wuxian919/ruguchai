@@ -135,25 +135,25 @@ export async function changePassword(
 export async function createDefaultUser() {
   const client = getSupabaseClient();
 
-  // Check if admin user exists
+  // Check if rugu user exists
   const { data: existing } = await client
     .from('users')
     .select('id')
-    .eq('username', 'admin')
+    .eq('username', 'rugu')
     .maybeSingle();
 
   if (existing) {
     return { success: true, message: '默认用户已存在' };
   }
 
-  const hash = await hashPassword('admin123');
+  const hash = await hashPassword('rugu');
   const { error } = await client
     .from('users')
-    .insert({ username: 'admin', password_hash: hash });
+    .insert({ username: 'rugu', password_hash: hash });
 
   if (error) {
     return { success: false, message: error.message };
   }
 
-  return { success: true, message: '默认用户创建成功（admin / admin123）' };
+  return { success: true, message: '默认用户创建成功（rugu / rugu）' };
 }
