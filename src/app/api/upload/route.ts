@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Storage } from 'coze-coding-dev-sdk';
+import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { requireAuth } from '@/lib/api-auth';
-
-const storage = new S3Storage({
-  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-  accessKey: '',
-  secretKey: '',
-  bucketName: process.env.COZE_BUCKET_NAME,
-  region: 'cn-beijing',
-});
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAuth(request);
@@ -35,22 +27,28 @@ export async function POST(request: NextRequest) {
     const ext = file.name.split('.').pop() || 'jpg';
     const fileName = `products/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
 
-    // Upload to storage
-    const key = await storage.uploadFile({
-      fileContent: buffer,
-      fileName,
-      contentType: file.type,
-    });
+    // Upload to Supabase Storage
+    const client = getSupabaseClient();
+    const { data, error } = await client.storage
+      .from('products')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    // Generate a presigned URL with long expiry (30 days)
-    const url = await storage.generatePresignedUrl({
-      key,
-      expireTime: 2592000, // 30 days
-    });
+    if (error) {
+      console.error('Supabase storage error:', error);
+      return NextResponse.json({ error: 'Upload failed: ' + error.message }, { status: 500 });
+    }
+
+    // Get public URL
+    const { data: urlData } = client.storage
+      .from('products')
+      .getPublicUrl(fileName);
 
     return NextResponse.json({
-      key,
-      url,
+      key: fileName,
+      url: urlData.publicUrl,
     });
   } catch (error) {
     console.error('Upload error:', error);
