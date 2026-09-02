@@ -123,7 +123,7 @@ export default function HomePage() {
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-stone-200 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-center text-stone-800 flex-1">
-            如故
+            如故柴烧
           </h1>
           <button
             onClick={logout}
