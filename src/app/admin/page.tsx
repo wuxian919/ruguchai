@@ -472,8 +472,11 @@ function ProductForm({
 
     setUploading(true);
     try {
+      // 压缩图片
+      const compressedFile = await compressImage(file, 1920, 0.8);
+      
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile);
 
       const response = await authFetch('/api/upload', {
         method: 'POST',
@@ -509,6 +512,63 @@ function ProductForm({
       // 重置文件输入，允许重新上传同一文件
       e.target.value = '';
     }
+  };
+
+  // 压缩图片函数
+  const compressImage = (file: File, maxWidth: number, quality: number): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // 计算新尺寸
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          // 创建 canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // 转换为 blob
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Compression failed'));
+                return;
+              }
+              
+              // 创建新的 File 对象
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              
+              resolve(compressedFile);
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
