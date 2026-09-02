@@ -84,24 +84,34 @@ export default function AdminPage() {
 
   const handleSaveProduct = async (product: Product) => {
     try {
+      let response;
       if (product.id) {
-        await authFetch(`/api/products/${product.id}`, {
+        response = await authFetch(`/api/products/${product.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product),
         });
       } else {
-        await authFetch('/api/products', {
+        response = await authFetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product),
         });
       }
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert('保存失败：' + (data.error || '未知错误'));
+        return;
+      }
+      
       setShowProductDialog(false);
       setEditingProduct(null);
       fetchData();
     } catch (error) {
       console.error('Failed to save product:', error);
+      alert('保存失败：' + error);
     }
   };
 
