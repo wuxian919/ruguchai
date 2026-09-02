@@ -472,41 +472,34 @@ function ProductForm({
 
     setUploading(true);
     try {
-      // 压缩图片
-      const compressedFile = await compressImage(file, 1920, 0.8);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await authFetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      // 先获取文本，避免 JSON 解析错误
+      const text = await response.text();
       
-      // 直接使用 Supabase 客户端上传，绕过 Netlify 函数
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      // 生成唯一文件名
-      const ext = compressedFile.name.split('.').pop() || 'jpg';
-      const fileName = `products/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
-      
-      // 上传到 Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('products')
-        .upload(fileName, compressedFile, {
-          contentType: compressedFile.type,
-          upsert: false,
-        });
-      
-      if (error) {
-        throw new Error('上传失败：' + error.message);
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // 如果不是 JSON，显示原始响应
+        throw new Error('服务器返回格式错误：' + text.substring(0, 100));
       }
-      
-      // 获取公开 URL
-      const { data: urlData } = supabase.storage
-        .from('products')
-        .getPublicUrl(fileName);
-      
-      if (urlData.publicUrl) {
-        setImageUrl(urlData.publicUrl);
-        setPreviewUrl(urlData.publicUrl);
+
+      if (!response.ok) {
+        throw new Error(data.error || '上传失败');
+      }
+
+      if (data.url) {
+        setImageUrl(data.url);
+        setPreviewUrl(data.url);
       } else {
-        throw new Error('获取图片 URL 失败');
+        throw new Error(data.error || '未知错误');
       }
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -516,63 +509,6 @@ function ProductForm({
       // 重置文件输入，允许重新上传同一文件
       e.target.value = '';
     }
-  };
-
-  // 压缩图片函数
-  const compressImage = (file: File, maxWidth: number, quality: number): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // 计算新尺寸
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-          
-          // 创建 canvas
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Canvas context not available'));
-            return;
-          }
-          
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // 转换为 blob
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Compression failed'));
-                return;
-              }
-              
-              // 创建新的 File 对象
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              
-              resolve(compressedFile);
-            },
-            'image/jpeg',
-            quality
-          );
-        };
-        img.onerror = reject;
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
