@@ -464,9 +464,9 @@ function ProductForm({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 检查文件大小（限制 10MB）
-    if (file.size > 10 * 1024 * 1024) {
-      alert('图片太大，请选择小于 10MB 的图片');
+    // 检查文件大小（限制 5MB，减少超时风险）
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片太大（超过 5MB），请选择较小的图片或压缩后再上传');
       return;
     }
 
@@ -487,8 +487,8 @@ function ProductForm({
       try {
         data = JSON.parse(text);
       } catch {
-        // 如果不是 JSON，显示原始响应
-        throw new Error('服务器返回格式错误：' + text.substring(0, 100));
+        // 如果不是 JSON，可能是超时或服务器错误
+        throw new Error('服务器响应超时或格式错误，请重试或使用较小的图片');
       }
 
       if (!response.ok) {
@@ -503,7 +503,7 @@ function ProductForm({
       }
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert('上传失败：' + (error.message || error));
+      alert('上传失败：' + (error.message || error) + '\n\n建议：\n1. 使用较小的图片（小于 2MB）\n2. 或压缩图片后重试');
     } finally {
       setUploading(false);
       // 重置文件输入，允许重新上传同一文件
