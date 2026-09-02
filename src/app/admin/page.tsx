@@ -464,6 +464,12 @@ function ProductForm({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 检查文件大小（限制 10MB）
+    if (file.size > 10 * 1024 * 1024) {
+      alert('图片太大，请选择小于 10MB 的图片');
+      return;
+    }
+
     setUploading(true);
     try {
       const formData = new FormData();
@@ -474,17 +480,34 @@ function ProductForm({
         body: formData,
       });
 
-      const data = await response.json();
+      // 先获取文本，避免 JSON 解析错误
+      const text = await response.text();
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // 如果不是 JSON，显示原始响应
+        throw new Error('服务器返回格式错误：' + text.substring(0, 100));
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || '上传失败');
+      }
+
       if (data.url) {
         setImageUrl(data.url);
         setPreviewUrl(data.url);
       } else {
-        alert('上传失败：' + (data.error || '未知错误'));
+        throw new Error(data.error || '未知错误');
       }
-    } catch (error) {
-      alert('上传失败：' + error);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      alert('上传失败：' + (error.message || error));
     } finally {
       setUploading(false);
+      // 重置文件输入，允许重新上传同一文件
+      e.target.value = '';
     }
   };
 
